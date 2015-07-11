@@ -474,33 +474,19 @@ class SimplePie
 	public $timeout = 10;
 
 	/**
+	 * @var array Custom curl options
+	 * @see SimplePie::set_curl_options()
+	 * @access private
+	 */
+	public $curl_options = array();
+
+	/**
 	 * @var bool Forces fsockopen() to be used for remote files instead
 	 * of cURL, even if a new enough version is installed
 	 * @see SimplePie::force_fsockopen()
 	 * @access private
 	 */
 	public $force_fsockopen = false;
-	
-	/**
-	 * @var string set the HTTP proxy address for cURL
-	 * @see SimplePie::proxyhost()
-	 * @access private
-	 */
-	private $proxyhost = null;
-	
-	/**
-	 * @var int set the HTTP proxy port for cURL
-	 * @see SimplePie::proxyport()
-	 * @access private
-	 */
-	private $proxyport = null;
-	
-	/**
-	 * @var string set the HTTP proxy user and password for cURL
-	 * @see SimplePie::proxyuserpwd()
-	 * @access private
-	 */
-	private $proxyuserpwd = null;
 
 	/**
 	 * @var bool Force the given data/URL to be treated as a feed no matter what
@@ -816,6 +802,19 @@ class SimplePie
 	{
 		$this->timeout = (int) $timeout;
 	}
+    
+	/**
+	 * Set custom curl options
+	 *
+	 * This allows you to change default curl options
+	 *
+	 * @since 1.0 Beta 3
+	 * @param array $curl_options Curl options to add to default settings
+	 */
+	public function set_curl_options(array $curl_options = array())
+	{
+		$this->curl_options = $curl_options;
+	}
 
 	/**
 	 * Force SimplePie to use fsockopen() instead of cURL
@@ -827,39 +826,6 @@ class SimplePie
 	{
 		$this->force_fsockopen = (bool) $enable;
 	}
-	
-	/**
-	 * Specify a proxy host to use with cURL
-	 * 
-	 * @param string $proxyhost
-	 */
-	 
-	 public function set_proxyhost($proxyhost)
-	 {
-	 	$this->proxyhost = (string) $proxyhost;
-	 }
-	 
-	 /**
-	 * Specify a proxy port to use with cURL
-	 * 
-	 * @param int $proxyport
-	 */
-	 
-	 public function set_proxyport($proxyport)
-	 {
-	 	$this->proxyport = (int) $proxyport;
-	 }
-	 
-	 /**
-	 * Specify a proxy user and password to use with cURL
-	 * 
-	 * @param int $proxyport
-	 */
-	 
-	 public function set_proxyuserpwd($proxyuserpwd)
-	 {
-	 	$this->proxyuserpwd = (string) $proxyuserpwd;
-	 }
 
 	/**
 	 * Enable/disable caching in SimplePie.
@@ -1331,7 +1297,7 @@ class SimplePie
 		// Pass whatever was set with config options over to the sanitizer.
 		// Pass the classes in for legacy support; new classes should use the registry instead
 		$this->sanitize->pass_cache_data($this->cache, $this->cache_location, $this->cache_name_function, $this->registry->get_class('Cache'));
-		$this->sanitize->pass_file_data($this->registry->get_class('File'), $this->timeout, $this->useragent, $this->force_fsockopen);
+		$this->sanitize->pass_file_data($this->registry->get_class('File'), $this->timeout, $this->useragent, $this->force_fsockopen, $this->curl_options);
 
 		if (!empty($this->multifeed_url))
 		{
@@ -1555,7 +1521,7 @@ class SimplePie
 						$headers['if-none-match'] = $this->data['headers']['etag'];
 					}
 
-					$file = $this->registry->create('File', array($this->feed_url, $this->timeout, 5, $headers, $this->useragent, $this->force_fsockopen, $this->proxyhost, $this->proxyport, $this->proxyuserpwd));
+					$file = $this->registry->create('File', array($this->feed_url, $this->timeout, 5, $headers, $this->useragent, $this->force_fsockopen, $this->curl_options));
 
 					if ($file->success)
 					{
@@ -1600,7 +1566,7 @@ class SimplePie
 				$headers = array(
 					'Accept' => 'application/atom+xml, application/rss+xml, application/rdf+xml;q=0.9, application/xml;q=0.8, text/xml;q=0.8, text/html;q=0.7, unknown/unknown;q=0.1, application/unknown;q=0.1, */*;q=0.1',
 				);
-				$file = $this->registry->create('File', array($this->feed_url, $this->timeout, 5, $headers, $this->useragent, $this->force_fsockopen));
+				$file = $this->registry->create('File', array($this->feed_url, $this->timeout, 5, $headers, $this->useragent, $this->force_fsockopen, $this->curl_options));
 			}
 		}
 		// If the file connection has an error, set SimplePie::error to that and quit
